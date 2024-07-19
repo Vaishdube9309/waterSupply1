@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Data to Google Sheets</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: white;
+            background-repeat: no-repeat;
+            background-size: cover;
+           
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            font-size: large;
+            font-weight: bolder;
+            /* float: left; */
+           
+
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .submit{
+            background: -webkit-linear-gradient(rgb(160, 228, 70), rgb(76, 95, 34));
+        }
+    </style>
+</head>
+<body>
+    <div class="container ">
+        <h2 class="text-center">वॉर्ड ची माहिती भारा</h2>
+        <form id="addForm">
+            <div class="form-group">
+                <label for="wardno">वॉर्ड क्रमांक</label>
+                <input type="text" class="form-control" id="wardno" required>
+            </div>
+            <div class="form-group">
+                <label for="date">दिनांक:</label>
+                <input type="text" class="form-control" id="date" required>
+            </div>
+            <div class="form-group">
+                <label for="time">वेळ:</label>
+                <input type="text" class="form-control" id="time" required>
+            </div>
+            <div class="form-group">
+                <label for="day">वार:</label>
+                <input type="text" class="form-control" id="day" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block submit">Save</button>
+        </form>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbz5LtnXNJpreHNvqcfgz5gsKHlpXKRCelBlfiPDwuLzBCkKboJnN-Ba8T0ckDxCpU12/exec';
+
+        $(document).ready(function() {
+            $('#addForm').submit(function(e) {
+                e.preventDefault();
+                const wardno = $('#wardno').val();
+                const date = $('#date').val();
+                const time = $('#time').val();
+                const day = $('#day').val();
+
+                fetch(scriptURL + `?action=addData&wardno=${wardno}&date=${date}&time=${time}&day=${day}`, { method: 'POST' })
+                    .then(response => response.text())
+                    .then(data => {
+                        alert('Data saved successfully.');
+                        resetForm();
+                    })
+                    .catch(error => console.error('Error saving data:', error));
+            });
+        });
+
+        function resetForm() {
+            $('#wardno').val('');
+            $('#date').val('');
+            $('#time').val('');
+            $('#day').val('');
+        }
+    </script>
+</body>
+</html>

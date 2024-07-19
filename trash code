@@ -1,0 +1,62 @@
+
+
+// Fetch data based on ward number
+function getDataByWardNumber(wardNumber) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  
+  var result = [];
+  for (var i = 1; i < values.length; i++) { // Start from 1 to skip header row
+    if (values[i][0] == wardNumber) {
+      result.push({
+        date: values[i][1],
+        time: values[i][2],
+        day: values[i][3]
+      });
+    }
+  }
+  return result;
+}
+
+// Update data based on ward number
+function updateData(wardNumber, newData) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  
+  for (var i = 1; i < values.length; i++) { // Start from 1 to skip header row
+    if (values[i][0] == wardNumber) {
+      sheet.getRange(i + 1, 2).setValue(newData.date); // Assuming date is in column 2
+      sheet.getRange(i + 1, 3).setValue(newData.time); // Assuming time is in column 3
+      sheet.getRange(i + 1, 4).setValue(newData.day);  // Assuming day is in column 4
+      break; // Assuming ward numbers are unique, so we can break after finding the first match
+    }
+  }
+}
+
+
+// Google Apps Script as an endpoint
+function doGet(e) {
+  if (e.parameter.wardNumber) {
+    var wardNumber = e.parameter.wardNumber;
+    var data = getDataByWardNumber(wardNumber);
+    return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+  } else {
+    return ContentService.createTextOutput('Invalid Request');
+  }
+}
+
+function doPost(e) {
+  var postData = JSON.parse(e.postData.contents);
+  var wardNumber = postData.wardNumber;
+  var newData = {
+    date: postData.date,
+    time: postData.time,
+    day: postData.day
+  };
+  
+  updateData(wardNumber, newData);
+  return ContentService.createTextOutput('Data updated successfully');
+}
+

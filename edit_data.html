@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Data in Google Sheets</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            /* background-image: url(bg.jpg); */
+            background-color: white;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            /* float: left; */
+            font-weight: bolder;
+       
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .button{
+            background: -webkit-linear-gradient(rgb(160, 228, 70), rgb(76, 95, 34));
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">सुधारणा करा</h2>
+        <div class="form-group">
+            <label for="wardSelector">वॉर्ड क्रमांक निवडा</label>
+            <select class="form-control" id="wardSelector">
+                <option value="">वॉर्ड क्रमांक निवडा</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        <form id="editForm">
+            <div class="form-group ">
+                <label for="wardno">वॉर्ड क्रमांक:</label>
+                <input type="text" class="form-control" id="wardno" readonly>
+            </div>
+            <div class="form-group">
+                <label for="date">दिनांक:</label>
+                <input type="text" class="form-control" id="date" required>
+            </div>
+            <div class="form-group">
+                <label for="time">वेळ:</label>
+                <input type="text" class="form-control" id="time" required>
+            </div>
+            <div class="form-group">
+                <label for="day">वार:</label>
+                <input type="text" class="form-control" id="day" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block button">Update</button>
+            <!-- <button type="button" class="btn btn-danger btn-block " onclick="deleteData()">Delete</button> -->
+        </form>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbz5LtnXNJpreHNvqcfgz5gsKHlpXKRCelBlfiPDwuLzBCkKboJnN-Ba8T0ckDxCpU12/exec';
+
+        $(document).ready(function() {
+            // Populate ward numbers in selector
+            fetch(scriptURL + '?action=getWardNumbers')
+                .then(response => response.json())
+                .then(data => {
+                    const wardSelector = document.getElementById('wardSelector');
+                    data.forEach(ward => {
+                        const option = document.createElement('option');
+                        option.value = ward;
+                        option.textContent = ward;
+                        wardSelector.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching ward numbers:', error));
+
+            // Handle ward number selection change
+            $('#wardSelector').change(function() {
+                const wardNumber = $(this).val();
+                fetch(scriptURL + `?action=getData&wardno=${wardNumber}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            const rowData = data[0]; // Assuming only one row for simplicity
+                            $('#wardno').val(rowData[0]);
+                            $('#date').val(rowData[1]);
+                            $('#time').val(rowData[2]);
+                            $('#day').val(rowData[3]);
+                        } else {
+                            resetForm();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                        resetForm();
+                    });
+            });
+
+            // Handle form submission for update
+            $('#editForm').submit(function(e) {
+                e.preventDefault();
+                const wardno = $('#wardno').val();
+                const date = $('#date').val();
+                const time = $('#time').val();
+                const day = $('#day').val();
+
+                fetch(scriptURL + `?action=updateData&wardno=${wardno}&date=${date}&time=${time}&day=${day}`, { method: 'POST' })
+                    .then(response => response.text())
+                    .then(data => {
+                        alert('Data updated successfully.');
+                        resetForm();
+                    })
+                    .catch(error => console.error('Error updating data:', error));
+            });
+        });
+
+        // Function to delete data
+        function deleteData() {
+            const wardno = $('#wardno').val();
+            if (!wardno) {
+                alert('Please select a ward number to delete data.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete this data?')) {
+                fetch(scriptURL + `?action=deleteData&wardno=${wardno}`, { method: 'DELETE' })
+                    .then(response => response.text())
+                    .then(data => {
+                        alert('Data deleted successfully.');
+                        resetForm();
+                    })
+                    .catch(error => console.error('Error deleting data:', error));
+            }
+        }
+
+        // Function to reset form fields
+        function resetForm() {
+            $('#wardno').val('');
+            $('#date').val('');
+            $('#time').val('');
+            $('#day').val('');
+            $('#wardSelector').val('');
+        }
+    </script>
+</body>
+</html>

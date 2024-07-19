@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show Ward Data from Google Sheets</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: white;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            font-weight: bolder !important;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+        .card-body {
+            background-color: #ffffff;
+            border-radius: 0.375rem;
+            padding: 1.25rem;
+        }
+        .card-title {
+            color: #007bff;
+            font-weight: bolder !important;
+        }
+        .card-text {
+            color: #6c757d;
+            font-weight: bolder !important;
+        }
+        .btn-primary {
+            background: -webkit-linear-gradient(rgb(160, 228, 70), rgb(76, 95, 34));
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .spinner-border {
+            display: none;
+            margin: auto;
+        }
+        .loading-message {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center mb-4">पाणी येण्याची वेळ</h2>
+        <div class="text-center">
+            <button id="showWardDataBtn" class="btn btn-primary mb-3">माहिती दाखवा</button>
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="loading-message">कृपया प्रतीक्षा करा...</div>
+        </div>
+        
+        <div id="wardDataContainer" class="row">
+            <!-- Cards will be dynamically added here -->
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbz5LtnXNJpreHNvqcfgz5gsKHlpXKRCelBlfiPDwuLzBCkKboJnN-Ba8T0ckDxCpU12/exec';
+
+        $(document).ready(function() {
+            $('#showWardDataBtn').click(function() {
+                $(this).hide();
+                $('.spinner-border').show();
+                $('.loading-message').show();
+                
+                fetch(scriptURL + '?action=getWardNumbers')
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#wardDataContainer').empty(); // Clear previous cards
+                        data.forEach(ward => {
+                            fetch(scriptURL + `?action=getData&wardno=${ward}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.length > 0) {
+                                        const rowData = data[0]; // Assuming only one row for simplicity
+                                        const formattedDate = new Date(rowData[1]).toLocaleDateString();
+                                        const formattedTime = new Date(rowData[2]).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                                        const cardHtml = `
+                                            <div class="col-md-6">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">वॉर्ड क्रमांक : ${rowData[0]}</h5>
+                                                        <p class="card-text">दिनांक: ${rowData[1]}</p>
+                                                        <p class="card-text">वेळ: ${formattedTime}</p>
+                                                        <p class="card-text">वार: ${rowData[3]}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                        $('#wardDataContainer').append(cardHtml);
+                                    }
+                                })
+                                .catch(error => console.error('Error fetching data:', error));
+                        });
+                        $('.spinner-border').hide();
+                        $('.loading-message').hide();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching ward numbers:', error);
+                        $('.spinner-border').hide();
+                        $('.loading-message').hide();
+                        $('#showWardDataBtn').show();
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
